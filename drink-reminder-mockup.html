@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>喝水提醒 - 预览</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'PingFang SC', 'Noto Sans SC', sans-serif;
+    background: #f0f4f8;
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 40px 20px;
+    flex-wrap: wrap;
+  }
+  .phone-frame {
+    width: 375px;
+    background: #fff;
+    border-radius: 40px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    overflow: hidden;
+    padding: 20px;
+    min-height: 700px;
+  }
+  .phone-frame h2 {
+    font-size: 14px;
+    color: #888;
+    text-align: center;
+    margin-bottom: 8px;
+    font-weight: 400;
+  }
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 16px;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .header .icon { font-size: 28px; }
+  .header h1 { font-size: 22px; font-weight: 700; color: #1a1a2e; }
+  .header .tag {
+    background: #e8f5e9;
+    color: #2e7d32;
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 12px;
+  }
+
+  /* 状态 A: 未登录 */
+  .section { margin-bottom: 28px; }
+  .section-title {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .reminder-preview {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 16px;
+    padding: 20px;
+    color: #fff;
+    margin-bottom: 20px;
+  }
+  .reminder-preview .big { font-size: 42px; font-weight: 800; }
+  .reminder-preview .label { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+  .reminder-preview .sub { font-size: 12px; opacity: 0.6; margin-top: 12px; }
+
+  .stats-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    flex: 1;
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    border: 1px solid #eef2f6;
+  }
+  .stat-card .num { font-size: 28px; font-weight: 700; color: #1a1a2e; }
+  .stat-card .stat-label { font-size: 12px; color: #888; margin-top: 4px; }
+
+  .qr-box {
+    background: #f8fafc;
+    border: 2px dashed #dde3ea;
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .qr-box:hover { border-color: #667eea; background: #f0f2ff; }
+  .qr-box .qr-placeholder {
+    width: 140px;
+    height: 140px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    margin: 0 auto 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 80px;
+  }
+  .qr-box .qr-label { font-size: 14px; color: #333; font-weight: 500; }
+  .qr-box .qr-sub { font-size: 12px; color: #999; margin-top: 4px; }
+
+  /* 状态 B: 已登录 */
+  .progress-ring {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(#667eea 0deg 60deg, #eef2f6 60deg 360deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    position: relative;
+  }
+  .progress-ring .inner {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .progress-ring .inner .big { font-size: 32px; font-weight: 800; color: #1a1a2e; }
+  .progress-ring .inner .unit { font-size: 12px; color: #888; }
+
+  .next-reminder {
+    background: #f0f2ff;
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .next-reminder .left .time { font-size: 18px; font-weight: 600; color: #1a1a2e; }
+  .next-reminder .left .desc { font-size: 12px; color: #888; }
+  .next-reminder .badge { font-size: 24px; }
+
+  .action-btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+
+  .label-state {
+    font-size: 11px;
+    color: #888;
+    text-align: center;
+    margin: 8px 0 16px;
+    padding: 4px 10px;
+    background: #f0f4f8;
+    border-radius: 8px;
+    display: inline-block;
+  }
+  .flex-center { display: flex; flex-direction: column; align-items: center; }
+
+  .divider { height: 1px; background: #eef2f6; margin: 20px 0; }
+
+  /* admin */
+  .admin-frame { width: 820px; background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.1); overflow: hidden; padding: 24px; }
+  .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  .admin-header h1 { font-size: 20px; }
+  .admin-header .sub { font-size: 13px; color: #888; }
+  .admin-table { width: 100%; border-collapse: collapse; }
+  .admin-table th { text-align: left; padding: 10px 12px; font-size: 12px; color: #888; border-bottom: 2px solid #eef2f6; }
+  .admin-table td { padding: 12px; font-size: 13px; border-bottom: 1px solid #f0f4f8; }
+  .admin-table .badge { padding: 2px 10px; border-radius: 10px; font-size: 11px; }
+  .badge-green { background: #e8f5e9; color: #2e7d32; }
+  .badge-red { background: #fbe9e7; color: #c62828; }
+  .badge-blue { background: #e3f2fd; color: #1565c0; }
+  .admin-stats { display: flex; gap: 16px; margin-bottom: 24px; }
+  .admin-stat-card { flex: 1; background: #f8fafc; border-radius: 12px; padding: 16px; }
+  .admin-stat-card .num { font-size: 24px; font-weight: 700; }
+  .admin-stat-card .label { font-size: 12px; color: #888; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<!-- === 手机 A: 未登录状态 === -->
+<div class="phone-frame">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span>📶 🔋</span>
+  </div>
+  <div class="header">
+    <span class="icon">💧</span>
+    <h1>喝水提醒</h1>
+    <span class="tag">ClawBot</span>
+  </div>
+
+  <!-- 每小时定时提醒概览 -->
+  <div class="reminder-preview">
+    <div class="big">每小时</div>
+    <div class="label">定时提醒</div>
+    <div class="sub">⏰ 到点微信提醒 · 回复即打卡</div>
+  </div>
+
+  <!-- 连续坚持统计 -->
+  <div class="section">
+    <div class="section-title">📊 连续坚持</div>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="num">0</div>
+        <div class="stat-label">今日已喝</div>
+      </div>
+      <div class="stat-card">
+        <div class="num">0</div>
+        <div class="stat-label">连续天数</div>
+      </div>
+      <div class="stat-card">
+        <div class="num">--</div>
+        <div class="stat-label">下次提醒</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 扫码登录 -->
+  <div class="section">
+    <div class="section-title">🔗 连接微信</div>
+    <div class="qr-box" onclick="alert('扫码连接微信后，即可接收喝水提醒')">
+      <div class="qr-placeholder">📱</div>
+      <div class="qr-label">扫码连接微信</div>
+      <div class="qr-sub">使用微信扫描 · 接收定时提醒</div>
+    </div>
+  </div>
+
+  <div class="flex-center">
+    <span class="label-state">⏳ 未登录 · 扫码后开始记录</span>
+  </div>
+</div>
+
+<!-- === 手机 B: 已登录状态 === -->
+<div class="phone-frame">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span>📶 🔋</span>
+  </div>
+  <div class="header">
+    <span class="icon">💧</span>
+    <h1>喝水提醒</h1>
+    <span class="tag">已连接 ✓</span>
+  </div>
+
+  <!-- 今日喝水进度 -->
+  <div class="flex-center">
+    <div class="progress-ring">
+      <div class="inner">
+        <div class="big">3</div>
+        <div class="unit">/ 8 次</div>
+      </div>
+    </div>
+    <div class="section-title" style="margin-top:0;">今日喝水进度</div>
+  </div>
+
+  <div class="next-reminder">
+    <div class="left">
+      <div class="time">⏰ 10:00</div>
+      <div class="desc">下次提醒 · 还有 28 分钟</div>
+    </div>
+    <div class="badge">💧</div>
+  </div>
+
+  <!-- 喝了一杯 -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="num">3</div>
+      <div class="stat-label">今日已喝</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">5</div>
+      <div class="stat-label">连续天数</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">10:00</div>
+      <div class="stat-label">下次提醒</div>
+    </div>
+  </div>
+
+  <button class="action-btn" onclick="alert('回复微信消息『喝了』即打卡')">💬 回复微信消息即可打卡</button>
+
+  <div class="divider"></div>
+
+  <!-- 历史记录 -->
+  <div class="section">
+    <div class="section-title">📋 今日记录</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f4f8;">
+        <span>✅ 09:02</span>
+        <span style="color:#888;font-size:13px;">回复了"喝了"</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f4f8;">
+        <span>✅ 08:01</span>
+        <span style="color:#888;font-size:13px;">回复了"好的"</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f4f8;">
+        <span>✅ 07:00</span>
+        <span style="color:#888;font-size:13px;">回复了"👍"</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- === 管理后台 === -->
+<div class="admin-frame">
+  <div class="admin-header">
+    <div>
+      <h1>📊 喝水提醒 · 管理后台</h1>
+      <div class="sub">ClawBot · 共 12 位用户</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <span class="badge badge-blue">管理员</span>
+    </div>
+  </div>
+
+  <div class="admin-stats">
+    <div class="admin-stat-card">
+      <div class="num">12</div>
+      <div class="label">总用户</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="num">48</div>
+      <div class="label">今日发送</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="num">42</div>
+      <div class="label">今日回复</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="num">87.5%</div>
+      <div class="label">回复率</div>
+    </div>
+  </div>
+
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>用户</th>
+        <th>微信昵称</th>
+        <th>状态</th>
+        <th>提醒模式</th>
+        <th>今日发送</th>
+        <th>今日喝水</th>
+        <th>连续天数</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>#001</td>
+        <td>小明</td>
+        <td><span class="badge badge-green">正常</span></td>
+        <td>每小时</td>
+        <td>8</td>
+        <td>6</td>
+        <td>5</td>
+        <td><span style="color:#667eea;cursor:pointer;">详情</span></td>
+      </tr>
+      <tr>
+        <td>#002</td>
+        <td>小红</td>
+        <td><span class="badge badge-green">正常</span></td>
+        <td>每小时</td>
+        <td>8</td>
+        <td>7</td>
+        <td>12</td>
+        <td><span style="color:#667eea;cursor:pointer;">详情</span></td>
+      </tr>
+      <tr>
+        <td>#003</td>
+        <td>小张</td>
+        <td><span class="badge badge-red">已断开</span></td>
+        <td>--</td>
+        <td>0</td>
+        <td>0</td>
+        <td>0</td>
+        <td><span style="color:#667eea;cursor:pointer;">详情</span></td>
+      </tr>
+      <tr>
+        <td>#004</td>
+        <td>小李</td>
+        <td><span class="badge badge-green">正常</span></td>
+        <td>每小时</td>
+        <td>6</td>
+        <td>5</td>
+        <td>3</td>
+        <td><span style="color:#667eea;cursor:pointer;">详情</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="text-align:center;margin-top:20px;color:#888;font-size:12px;">点击用户「详情」可查看个人配置、发送记录和喝水日历</p>
+</div>
+
+</body>
+</html>

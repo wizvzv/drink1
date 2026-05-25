@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UV 定制 3D 预览 - 效果对比</title>
+<style>
+  body { margin: 0; font-family: -apple-system, "PingFang SC", sans-serif; background: #f5f5f7; color: #1d1d1f; }
+  .header { text-align: center; padding: 30px 20px 10px; }
+  .header h1 { font-size: 24px; font-weight: 600; margin: 0 0 6px; }
+  .header p { font-size: 14px; color: #86868b; margin: 0; }
+  .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; padding: 20px; max-width: 1100px; margin: 0 auto; }
+  .panel { flex: 1; min-width: 320px; max-width: 520px; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 20px rgba(0,0,0,0.06); }
+  .panel-header { padding: 16px 20px; border-bottom: 1px solid #e8e8ed; display: flex; justify-content: space-between; align-items: center; }
+  .panel-header h2 { margin: 0; font-size: 16px; font-weight: 600; }
+  .badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+  .badge-a { background: #e8f5e9; color: #2e7d32; }
+  .badge-b { background: #e3f2fd; color: #1565c0; }
+  .scene-wrap { width: 100%; aspect-ratio: 1; position: relative; }
+  .scene-wrap canvas { display: block; width: 100% !important; height: 100% !important; }
+  .panel-footer { padding: 14px 20px; border-top: 1px solid #e8e8ed; font-size: 13px; color: #515154; line-height: 1.6; }
+  .panel-footer strong { color: #1d1d1f; }
+  .controls { text-align: center; padding: 0 20px 16px; font-size: 12px; color: #86868b; }
+  .controls span { display: inline-block; margin: 0 10px; }
+  .tag { display: inline-block; background: #f5f5f7; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin: 1px 2px; }
+  .material-btns { display: flex; gap: 8px; padding: 10px 16px 0; flex-wrap: wrap; }
+  .material-btn { padding: 6px 14px; border: 1.5px solid #d2d2d7; border-radius: 20px; background: #fff; font-size: 12px; cursor: pointer; color: #1d1d1f; transition: all 0.2s; }
+  .material-btn.active { border-color: #007aff; background: #007aff10; color: #007aff; }
+  .material-btn:hover { border-color: #007aff; }
+  @media (max-width: 700px) { .panel { min-width: 100%; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔄 UV 定制 3D 预览 · 效果对比</h1>
+  <p>鼠标拖拽旋转 · 滚轮缩放 · 直观感受两种方案的差异</p>
+</div>
+
+<div class="container">
+  <!-- 方案 A -->
+  <div class="panel">
+    <div class="panel-header">
+      <h2>方案 A · 基础 3D</h2>
+      <span class="badge badge-a">简约版</span>
+    </div>
+    <div class="scene-wrap" id="scene-a"></div>
+    <div class="material-btns" id="btns-a">
+      <button class="material-btn active" data-mat="acrylic">亚克力</button>
+      <button class="material-btn" data-mat="magnet">冰箱贴</button>
+      <button class="material-btn" data-mat="case">手机壳</button>
+    </div>
+    <div class="controls">
+      <span>🖱 拖拽旋转</span>
+      <span>🔍 滚轮缩放</span>
+    </div>
+    <div class="panel-footer">
+      <strong>特点：</strong>
+      <span class="tag">简单方块</span>
+      <span class="tag">基本厚度</span>
+      <span class="tag">照片贴图</span>
+      <span class="tag">旋转查看</span>
+      <br>一个带厚度的矩形块，照片贴在表面，可以旋转从各个角度查看。实现简单，性能好，适合快速展示。
+    </div>
+  </div>
+
+  <!-- 方案 B -->
+  <div class="panel">
+    <div class="panel-header">
+      <h2>方案 B · 材质质感</h2>
+      <span class="badge badge-b">质感版</span>
+    </div>
+    <div class="scene-wrap" id="scene-b"></div>
+    <div class="material-btns" id="btns-b">
+      <button class="material-btn active" data-mat="acrylic">亚克力</button>
+      <button class="material-btn" data-mat="magnet">冰箱贴</button>
+      <button class="material-btn" data-mat="case">手机壳</button>
+    </div>
+    <div class="controls">
+      <span>🖱 拖拽旋转</span>
+      <span>🔍 滚轮缩放</span>
+    </div>
+    <div class="panel-footer">
+      <strong>特点：</strong>
+      <span class="tag">材质反光</span>
+      <span class="tag">透明折射</span>
+      <span class="tag">环境光效</span>
+      <span class="tag">阴影投射</span>
+      <span class="tag">表面纹理</span>
+      <br>根据不同材料模拟真实的表面质感——亚克力的透明光泽、冰箱贴的哑光纹理、手机壳的微弧边缘。接近真实产品效果。
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+// --- setup helpers ---
+function setupScene(containerId) {
+  const container = document.getElementById(containerId);
+  const w = container.clientWidth;
+  const h = container.clientHeight || w;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xf0f0f4);
+
+  const camera = new THREE.PerspectiveCamera(40, w/h, 0.1, 100);
+  camera.position.set(3, 2, 5);
+  camera.lookAt(0, 0, 0);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.2;
+  container.appendChild(renderer.domElement);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.minDistance = 2;
+  controls.maxDistance = 10;
+  controls.target.set(0, 0, 0);
+  controls.autoRotate = false;
+
+  // lights
+  const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+  scene.add(ambient);
+
+  const main = new THREE.DirectionalLight(0xffffff, 1.8);
+  main.position.set(5, 8, 5);
+  main.castShadow = true;
+  main.shadow.mapSize.width = 1024;
+  main.shadow.mapSize.height = 1024;
+  scene.add(main);
+
+  const fill = new THREE.DirectionalLight(0xffffff, 0.6);
+  fill.position.set(-3, 1, -4);
+  scene.add(fill);
+
+  const rim = new THREE.DirectionalLight(0xffffff, 0.4);
+  rim.position.set(0, -2, 4);
+  scene.add(rim);
+
+  // ground plane (subtle)
+  const groundGeo = new THREE.PlaneGeometry(8, 8);
+  const groundMat = new THREE.ShadowMaterial({ opacity: 0.15 });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI/2;
+  ground.position.y = -0.6;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // helper grid on ground
+  const grid = new THREE.GridHelper(6, 12, 0xcccccc, 0xdddddd);
+  grid.position.y = -0.59;
+  scene.add(grid);
+
+  return { scene, camera, renderer, controls, container };
+}
+
+// --- texture helper ---
+function createPhotoTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  
+  // gradient background
+  const grad = ctx.createLinearGradient(0, 0, 512, 512);
+  grad.addColorStop(0, '#ff6b6b');
+  grad.addColorStop(0.3, '#ee5a24');
+  grad.addColorStop(0.6, '#f093fb');
+  grad.addColorStop(1, '#4facfe');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 512, 512);
+
+  // abstract shapes (like a photo)
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  for (let i = 0; i < 30; i++) {
+    const x = Math.random() * 512;
+    const y = Math.random() * 512;
+    const r = Math.random() * 60 + 10;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // some text
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.font = 'bold 48px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('📷 我的照片', 256, 256);
+
+  ctx.font = '20px -apple-system, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.fillText('UV 定制效果预览', 256, 320);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.needsUpdate = true;
+  return tex;
+}
+
+const photoTex = createPhotoTexture();
+
+// ============ 方案 A: Simple 3D block ============
+const { scene: sceneA, camera: camA, renderer: renA, controls: ctrlA, container: contA } = setupScene('scene-a');
+
+// Create the plate - simple box with thickness
+let plateA = null;
+let currentMatA = 'acrylic';
+
+function createPlateA(material) {
+  if (plateA) { sceneA.remove(plateA); plateA.geometry.dispose(); plateA.material.dispose(); }
+
+  const w = 2.2, h = 2.8, thickness = material === 'case' ? 0.12 : 0.08;
+  
+  const geo = new THREE.BoxGeometry(w, h, thickness);
+  
+  const materials = [];
+  // 6 faces: +x, -x, +y, -y, +z, -z
+  // We want the photo on the front (+z) face
+  const defaultMat = new THREE.MeshStandardMaterial({
+    color: material === 'acrylic' ? 0xeeeeff : material === 'magnet' ? 0xf5f0e8 : 0x333344,
+    roughness: material === 'acrylic' ? 0.2 : material === 'magnet' ? 0.8 : 0.6,
+    metalness: material === 'acrylic' ? 0.1 : 0.0,
+  });
+  
+  // Front face - photo
+  const frontMat = new THREE.MeshStandardMaterial({
+    map: photoTex,
+    roughness: material === 'magnet' ? 0.6 : 0.3,
+    metalness: 0.0,
+  });
+
+  // Back face - solid color
+  const backMat = material === 'acrylic' 
+    ? new THREE.MeshStandardMaterial({ color: 0xccccdd, transparent: true, opacity: 0.4, roughness: 0.1 })
+    : defaultMat.clone();
+
+  const edgeMat = material === 'acrylic'
+    ? new THREE.MeshStandardMaterial({ color: 0xaaaacc, transparent: true, opacity: 0.3, roughness: 0.1 })
+    : defaultMat.clone();
+
+  if (material === 'case') {
+    // For phone case, give it a slight bevel look
+    defaultMat.color.setHex(0x2a2a3a);
+  }
+
+  const mats = [defaultMat, defaultMat, defaultMat, defaultMat, frontMat, backMat];
+  
+  plateA = new THREE.Mesh(geo, mats);
+  plateA.castShadow = true;
+  plateA.receiveShadow = true;
+  plateA.position.y = 0.2;
+  sceneA.add(plateA);
+}
+
+createPlateA('acrylic');
+
+// ============ 方案 B: Material质感 ============
+const { scene: sceneB, camera: camB, renderer: renB, controls: ctrlB, container: contB } = setupScene('scene-b');
+
+// Make scene B background slightly different
+sceneB.background = new THREE.Color(0xeaeaf0);
+
+// Add subtle environment-like lighting for B
+const hemiB = new THREE.HemisphereLight(0xffffff, 0x444466, 0.6);
+sceneB.add(hemiB);
+
+let plateB = null;
+let frameB = null;
+let glowB = null;
+let currentMatB = 'acrylic';
+
+function createPlateB(material) {
+  // Remove old
+  if (plateB) { sceneB.remove(plateB); plateB.geometry.dispose(); if(Array.isArray(plateB.material)) plateB.material.forEach(m=>m.dispose()); else plateB.material.dispose(); }
+  if (frameB) { sceneB.remove(frameB); frameB.geometry.dispose(); frameB.material.dispose(); }
+  if (glowB) { sceneB.remove(glowB); glowB.geometry.dispose(); glowB.material.dispose(); }
+
+  const w = 2.2, h = 2.8, thick = material === 'case' ? 0.14 : 0.1;
+
+  // --- Main plate with rounded feel ---
+  // We use a slightly beveled look by using rounded box or just box with better materials
+  const geo = new THREE.BoxGeometry(w, h, thick);
+  
+  // Front photo with premium material
+  const frontMat = new THREE.MeshPhysicalMaterial({
+    map: photoTex,
+    roughness: material === 'acrylic' ? 0.05 : material === 'magnet' ? 0.7 : 0.4,
+    metalness: material === 'acrylic' ? 0.0 : 0.0,
+    clearcoat: material === 'acrylic' ? 0.8 : 0.0,
+    clearcoatRoughness: 0.2,
+    envMapIntensity: 1.0,
+  });
+
+  const backMat = new THREE.MeshPhysicalMaterial({
+    color: material === 'acrylic' ? 0xddddff : material === 'magnet' ? 0xe8ddd0 : 0x222233,
+    roughness: material === 'acrylic' ? 0.0 : material === 'magnet' ? 0.9 : 0.5,
+    metalness: 0.0,
+    transparent: material === 'acrylic',
+    opacity: material === 'acrylic' ? 0.3 : 1.0,
+    envMapIntensity: 0.3,
+  });
+
+  const edgeMat = new THREE.MeshPhysicalMaterial({
+    color: material === 'acrylic' ? 0xbbccff : material === 'magnet' ? 0xd4c9b8 : 0x333344,
+    roughness: material === 'acrylic' ? 0.0 : material === 'magnet' ? 0.85 : 0.5,
+    metalness: material === 'acrylic' ? 0.0 : 0.0,
+    transparent: material === 'acrylic',
+    opacity: material === 'acrylic' ? 0.6 : 1.0,
+    envMapIntensity: 0.5,
+  });
+
+  const sideMat = material === 'acrylic' ? new THREE.MeshPhysicalMaterial({
+    color: 0xccddff,
+    roughness: 0.0,
+    metalness: 0.0,
+    transparent: true,
+    opacity: 0.25,
+    envMapIntensity: 0.8,
+    clearcoat: 0.3,
+  }) : edgeMat;
+
+  plateB = new THREE.Mesh(geo, [
+    sideMat, sideMat,  // +x, -x
+    edgeMat, edgeMat,  // +y, -y (top/bottom edges get slightly different)
+    frontMat, backMat  // +z front, -z back
+  ]);
+  plateB.castShadow = true;
+  plateB.receiveShadow = true;
+  plateB.position.y = 0.2;
+  sceneB.add(plateB);
+
+  // --- Material-specific additions ---
+  if (material === 'acrylic') {
+    // Add a subtle edge glow / refractive edge
+    const glowGeo = new THREE.BoxGeometry(w + 0.02, h + 0.02, thick + 0.02);
+    const glowMat = new THREE.MeshPhysicalMaterial({
+      color: 0xaaccff,
+      transparent: true,
+      opacity: 0.08,
+      roughness: 0.0,
+      metalness: 0.0,
+      envMapIntensity: 1.5,
+      side: THREE.BackSide,
+    });
+    glowB = new THREE.Mesh(glowGeo, glowMat);
+    glowB.position.y = 0.2;
+    sceneB.add(glowB);
+
+    // Acrylic border frame - thin elegant frame
+    const frameGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(w - 0.05, h - 0.05, thick + 0.01));
+    const frameMat = new THREE.LineBasicMaterial({ color: 0x88aadd, transparent: true, opacity: 0.5 });
+    frameB = new THREE.LineSegments(frameGeo, frameMat);
+    frameB.position.y = 0.2;
+    sceneB.add(frameB);
+  } else if (material === 'magnet') {
+    // Add a subtle backing tint
+    const frameGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(w, h, thick));
+    const frameMat = new THREE.LineBasicMaterial({ color: 0xbba88a, transparent: true, opacity: 0.3 });
+    frameB = new THREE.LineSegments(frameGeo, frameMat);
+    frameB.position.y = 0.2;
+    sceneB.add(frameB);
+  } else if (material === 'case') {
+    // Phone case - slightly curved edge effect with a dark frame
+    const frameGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(w + 0.06, h + 0.06, thick + 0.04));
+    const frameMat = new THREE.LineBasicMaterial({ color: 0x555577, transparent: true, opacity: 0.6 });
+    frameB = new THREE.LineSegments(frameGeo, frameMat);
+    frameB.position.y = 0.2;
+    sceneB.add(frameB);
+  }
+}
+
+createPlateB('acrylic');
+
+// --- Animation loop ---
+function animateA() {
+  requestAnimationFrame(animateA);
+  ctrlA.update();
+  renA.render(sceneA, camA);
+}
+animateA();
+
+function animateB() {
+  requestAnimationFrame(animateB);
+  ctrlB.update();
+  renB.render(sceneB, camB);
+}
+animateB();
+
+// --- Material switch ---
+document.querySelectorAll('#btns-a .material-btn, #btns-b .material-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const parent = btn.closest('.panel');
+    const isA = parent.id === 'scene-a' || parent.querySelector('#scene-a');
+    // determine which group
+    const group = btn.closest('#btns-a, #btns-b');
+    group.querySelectorAll('.material-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const mat = btn.dataset.mat;
+    if (group.id === 'btns-a') {
+      currentMatA = mat;
+      createPlateA(mat);
+    } else {
+      currentMatB = mat;
+      createPlateB(mat);
+    }
+  });
+});
+
+// --- Resize ---
+window.addEventListener('resize', () => {
+  [contA, contB].forEach((c, i) => {
+    const w = c.clientWidth;
+    const h = w; // square
+    const cam = i === 0 ? camA : camB;
+    const ren = i === 0 ? renA : renB;
+    cam.aspect = w / h;
+    cam.updateProjectionMatrix();
+    ren.setSize(w, h);
+  });
+});
+
+// Fix material buttons - the IDs are on the divs inside each panel
+document.querySelectorAll('#btns-a .material-btn, #btns-b .material-btn').forEach(btn => {
+  // already handled above
+});
+
+console.log('UV Preview Demo Ready!');
+</script>
+
+</body>
+</html>

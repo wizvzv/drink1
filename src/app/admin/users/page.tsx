@@ -27,6 +27,7 @@ export default function AdminUsers() {
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     loadData();
@@ -46,13 +47,22 @@ export default function AdminUsers() {
       fetch("/api/admin/stats", { headers }),
     ]);
 
-    if (usersRes.status === 401) {
+    if (usersRes.status === 401 || statsRes.status === 401) {
       window.location.href = "/admin/login";
       return;
     }
 
-    setUsers(await usersRes.json());
-    setStats(await statsRes.json());
+    if (!usersRes.ok || !statsRes.ok) {
+      setError("加载数据失败，请检查数据库连接");
+      setLoading(false);
+      return;
+    }
+
+    const usersData = await usersRes.json();
+    const statsData = await statsRes.json();
+
+    setUsers(Array.isArray(usersData) ? usersData : []);
+    setStats(statsData);
     setLoading(false);
   }
 
@@ -60,6 +70,22 @@ export default function AdminUsers() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-gray-50">
         <p className="text-gray-400">加载中...</p>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p className="text-red-500">{error}</p>
+          <button
+            onClick={loadData}
+            className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700"
+          >
+            重试
+          </button>
+        </div>
       </main>
     );
   }

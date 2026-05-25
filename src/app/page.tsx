@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface UserState {
   isLoggedIn: boolean;
@@ -9,9 +9,79 @@ interface UserState {
   nextReminder: string;
 }
 
+interface QrCodeData {
+  qrcode_url: string;
+  qrcode: string;
+}
+
 export default function Home() {
   const [user, setUser] = useState<UserState | null>(null);
   const [showQr, setShowQr] = useState(false);
+  const [qrData, setQrData] = useState<QrCodeData | null>(null);
+  const [qrStatus, setQrStatus] = useState<string>("");
+  const [qrError, setQrError] = useState("");
+
+  // 获取二维码
+  const fetchQrCode = useCallback(async () => {
+    setQrError("");
+    setQrStatus("wait");
+    try {
+      const res = await fetch("/api/bot/qrcode");
+      if (!res.ok) throw new Error("获取二维码失败");
+      const data = await res.json();
+      if (data.data?.qrcode_url) {
+        setQrData({
+          qrcode_url: data.data.qrcode_url,
+          qrcode: data.data.qrcode,
+        });
+        // 开始轮询扫码状态
+        pollStatus(data.data.qrcode);
+      } else {
+        throw new Error("二维码数据异常");
+      }
+    } catch {
+      setQrError("获取二维码失败，请重试");
+    }
+  }, []);
+
+  // 轮询扫码状态
+  const pollStatus = useCallback(async (qrcode: string) => {
+    try {
+      const res = await fetch(`/api/bot/status?qrcode=${qrcode}`);
+      const data = await res.json();
+
+      if (data.status === "confirmed") {
+        setQrStatus("confirmed");
+        setUser({
+          isLoggedIn: true,
+          todayCount: 0,
+          streakDays: 0,
+          nextReminder: "--:--",
+        });
+        return;
+      }
+
+      if (data.status === "expired") {
+        setQrStatus("expired");
+        setQrError("二维码已过期，请重新获取");
+        return;
+      }
+
+      setQrStatus(data.status);
+
+      // 继续轮询
+      setTimeout(() => pollStatus(qrcode), 2000);
+    } catch {
+      // 重试
+      setTimeout(() => pollStatus(qrcode), 3000);
+    }
+  }, []);
+
+  // 点击扫码按钮
+  const handleLoginClick = useCallback(() => {
+    setShowQr(true);
+    fetchQrCode();
+  }, [fetchQrCode]);
 
   useEffect(() => {
     // TODO: 检查登录状态
@@ -19,13 +89,45 @@ export default function Home() {
   }, []);
 
   if (!user || !user.isLoggedIn) {
-    return <NotLoggedInView onLoginClick={() => setShowQr(true)} showQr={showQr} />;
+    return (
+      <NotLoggedInView
+        onLoginClick={handleLoginClick}
+        showQr={showQr}
+        qrData={qrData}
+        qrStatus={qrStatus}
+        qrError={qrError}
+        onRetry={fetchQrCode}
+      />
+    );
   }
 
   return <LoggedInView user={user} />;
 }
 
-function NotLoggedInView({ onLoginClick, showQr }: { onLoginClick: () => void; showQr: boolean }) {
+function NotLoggedInView({
+  onLoginClick,
+  showQr,
+  qrData,
+  qrStatus,
+  qrError,
+  onRetry,
+}: {
+  onLoginClick: () => void;
+  showQr: boolean;
+  qrData: QrCodeData | null;
+  qrStatus: string;
+  qrError: string;
+  onRetry: () => void;
+}) {
+  const statusText =
+    qrStatus === "wait"
+      ? "等待扫码..."
+      : qrStatus === "scaned"
+        ? "已扫码，请在手机上确认"
+        : qrStatus === "expired"
+          ? "二维码已过期"
+          : "";
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white px-4 py-8">
       <div className="mx-auto max-w-md">
@@ -64,9 +166,38 @@ function NotLoggedInView({ onLoginClick, showQr }: { onLoginClick: () => void; s
           <div className="rounded-2xl border-2 border-indigo-200 bg-white p-8 text-center shadow-md">
             <div className="mb-2 text-6xl">📱</div>
             <div className="mb-2 text-lg font-medium text-gray-700">使用微信扫码</div>
-            <div className="mb-4 h-48 w-48 mx-auto bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
-              二维码加载中...
-            </div>
+
+            {qrData ? (
+              <div className="mb-4 mx-auto h-48 w-48 flex items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={qrData.qrcode_url}
+                  alt="微信二维码"
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            ) : (
+              <div className="mb-4 mx-auto h-48 w-48 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
+                {qrError ? "加载失败" : "二维码加载中..."}
+              </div>
+            )}
+
+            {statusText && !qrError && (
+              <p className="text-sm text-indigo-600 mb-2">{statusText}</p>
+            )}
+
+            {qrError && (
+              <div className="mb-2">
+                <p className="text-sm text-red-500">{qrError}</p>
+                <button
+                  onClick={onRetry}
+                  className="mt-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700"
+                >
+                  重试
+                </button>
+              </div>
+            )}
+
             <p className="text-xs text-gray-400">请使用微信扫描二维码以绑定</p>
           </div>
         )}

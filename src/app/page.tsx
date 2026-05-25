@@ -45,9 +45,11 @@ export default function Home() {
   }, []);
 
   // 轮询扫码状态
-  const pollStatus = useCallback(async (qrcode: string) => {
+  const pollStatus = useCallback(async (qrcode: string, pollCount = 0) => {
     try {
-      const res = await fetch(`/api/bot/status?qrcode=${qrcode}`);
+      const res = await fetch(
+        `/api/bot/status?qrcode=${qrcode}&poll=${pollCount}`
+      );
       const data = await res.json();
 
       if (data.status === "confirmed") {
@@ -70,10 +72,10 @@ export default function Home() {
       setQrStatus(data.status);
 
       // 继续轮询
-      setTimeout(() => pollStatus(qrcode), 2000);
+      setTimeout(() => pollStatus(qrcode, pollCount + 1), 2000);
     } catch {
       // 重试
-      setTimeout(() => pollStatus(qrcode), 3000);
+      setTimeout(() => pollStatus(qrcode, pollCount + 1), 3000);
     }
   }, []);
 
@@ -84,7 +86,7 @@ export default function Home() {
   }, [fetchQrCode]);
 
   useEffect(() => {
-    // TODO: 检查登录状态
+    // TODO: 检查登录状态（通过 cookie/session）
     setUser(null);
   }, []);
 

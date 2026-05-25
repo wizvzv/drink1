@@ -4,7 +4,7 @@
  * 封装微信 Clawbot 的 HTTP 协议接口。
  * 基座地址: https://ilinkai.weixin.qq.com
  *
- * 协议参考: https://www.wechatbot.dev/zh/protocol
+ * API 参考: https://developers.weixin.qq.com/doc/aispeech/knowledge/openapi/Clawbotrelated.html
  */
 
 const BASE_URL = "https://ilinkai.weixin.qq.com";
@@ -53,7 +53,7 @@ function generateWechatUin(): string {
   const buf = new Uint8Array(4);
   crypto.getRandomValues(buf);
   const view = new DataView(buf.buffer);
-  const uint32 = view.getUint32(0, true); // little-endian
+  const uint32 = view.getUint32(0, true);
   const decimalStr = String(uint32);
   return Buffer.from(decimalStr).toString("base64");
 }
@@ -77,44 +77,58 @@ function buildHeaders(botToken?: string): Record<string, string> {
 
 /**
  * 获取微信登录二维码
+ *
+ * POST /api/v1/wechat/qrcode
  */
 export async function getQrCode(): Promise<QrCodeResponse> {
-  const url = `${BASE_URL}/get_bot_qrcode?bot_type=3`;
+  const url = `${BASE_URL}/api/v1/wechat/qrcode`;
 
   const res = await fetch(url, {
-    method: "GET",
+    method: "POST",
     headers: buildHeaders(),
+    body: JSON.stringify({}),
   });
 
   if (!res.ok) {
     throw new Error(`获取二维码失败: ${res.status}`);
   }
 
-  return res.json();
+  const qrText = await res.text();
+  if (!qrText) throw new Error("二维码接口返回空");
+
+  return JSON.parse(qrText);
 }
 
 /**
  * 轮询微信二维码扫描状态
+ *
+ * POST /api/v1/wechat/qrcode/status
  */
 export async function getQrCodeStatus(
   qrcode: string
 ): Promise<QrCodeStatusResponse> {
-  const url = `${BASE_URL}/get_qrcode_status?qrcode=${encodeURIComponent(qrcode)}`;
+  const url = `${BASE_URL}/api/v1/wechat/qrcode/status`;
 
   const res = await fetch(url, {
-    method: "GET",
+    method: "POST",
     headers: buildHeaders(),
+    body: JSON.stringify({ qrcode }),
   });
 
   if (!res.ok) {
     throw new Error(`查询二维码状态失败: ${res.status}`);
   }
 
-  return res.json();
+  const statusText = await res.text();
+  if (!statusText) throw new Error("状态接口返回空");
+
+  return JSON.parse(statusText);
 }
 
 /**
  * 发送文本消息
+ *
+ * POST /sendmessage
  */
 export async function sendMessage(
   botToken: string,
@@ -126,7 +140,7 @@ export async function sendMessage(
     base_info: { channel_version: "2.0.0" },
     to_user: toUser,
     content: text,
-    msg_type: 1, // 文本消息
+    msg_type: 1,
   };
 
   if (contextToken) {
@@ -143,7 +157,9 @@ export async function sendMessage(
     throw new Error(`发送消息失败: ${res.status}`);
   }
 
-  return res.json();
+  const sendText = await res.text();
+  if (!sendText) throw new Error("发送接口返回空");
+  return JSON.parse(sendText);
 }
 
 /**
@@ -174,7 +190,9 @@ export async function getUpdates(
       throw new Error(`接收消息失败: ${res.status}`);
     }
 
-    return res.json();
+    const updateText = await res.text();
+    if (!updateText) throw new Error("消息接口返回空");
+    return JSON.parse(updateText);
   } finally {
     clearTimeout(timeout);
   }
@@ -187,18 +205,12 @@ export async function resetChannel(
   botToken: string,
   channelId: string
 ): Promise<void> {
-  const body = {
-    base_info: { channel_version: "2.0.0" },
-    channel_id: channelId,
-  };
-
-  const res = await fetch(`${BASE_URL}/api/v1/wechat/channel_reset`, {
+  await fetch(`${BASE_URL}/api/v1/wechat/channel_reset`, {
     method: "POST",
     headers: buildHeaders(botToken),
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      base_info: { channel_version: "2.0.0" },
+      channel_id: channelId,
+    }),
   });
-
-  if (!res.ok) {
-    throw new Error(`重置通道失败: ${res.status}`);
-  }
 }
